@@ -4,9 +4,16 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    lowercase: true,
+    trim: true
   },
   mobile: String,
+  username: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   name: String,
   otp: String,
   otpExpires: Date,
@@ -18,6 +25,12 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  role: {
+    type: String,
+    enum: ['user', 'store_owner', 'admin'],
+    default: 'user'
+  },
+  profileImage: String,
   createdAt: {
     type: Date,
     default: Date.now
