@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
     trim: true
   },
   mobile: String,
+  bio: String,
   username: {
     type: String,
     unique: true,
@@ -31,6 +32,25 @@ const userSchema = new mongoose.Schema({
     default: 'user'
   },
   profileImage: String,
+
+
+  followersCount: {
+    type: Number,
+    default: 0
+  },
+  followingCount: {
+    type: Number,
+    default: 0
+  },
+
+
+
+
+
+
+
+
+
   createdAt: {
     type: Date,
     default: Date.now

@@ -52,6 +52,14 @@ const scanRoutes = require('./routes/scan.js');
 
 // Routes
 app.use('/api/auth', require('./routes/auth.js'));
+app.use('/api/socialusers', require('./routes/usersRoutes.js'));
+app.use('/api/follow', require('./routes/followRoutes.js'));
+app.use('/api/posts', require('./routes/postRoutes.js'));
+app.use('/api/reels', require('./routes/reelRoutes.js'));
+app.use('/api/upload', require('./routes/uploadRoutes.js'));
+
+
+
 app.use('/api/stores', storeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);

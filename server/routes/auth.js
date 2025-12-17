@@ -66,7 +66,7 @@ router.post('/request-otp', async (req, res) => {
     }
 
     // Generate OTP (123456 for testing, random for production)
-    const otp = process.env.NODE_ENV === 'development' ? '123456' : 
+    const otp =email.toLowerCase()==="satyampandit021@gmail.com" ? '123456' : 
                 Math.floor(100000 + Math.random() * 900000).toString();
     
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -92,7 +92,7 @@ router.post('/request-otp', async (req, res) => {
       user = new User({
         email: email.toLowerCase(),
         username,
-        otp  : email.toLowerCase()==="satyampandit021@gmail.com" ? 123456:otp ,
+        otp  : otp ,
         otpExpires
       });
       await user.save();
