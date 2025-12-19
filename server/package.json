@@ -23,7 +23,8 @@
     "multer": "^2.0.2",
     "nodemailer": "^6.9.4",
     "qrcode": "^1.5.4",
-    "razorpay": "^2.9.6"
+    "razorpay": "^2.9.6",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

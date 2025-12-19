@@ -5,6 +5,72 @@ const Store = require('../models/Store');
 const { authMiddleware } = require('../middleware/auth');
 const { validateUserProfile, handleValidationErrors } = require('../middleware/validation');
 const { upload, handleMulterError } = require('../middleware/upload');
+const followSchema = require('../models/followSchema');
+
+
+
+
+
+
+router.get('/search', authMiddleware, async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    if (!query || query.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query must be at least 2 characters'
+      });
+    }
+
+    const users = await User.find({
+      $or: [
+        { username: { $regex: query, $options: 'i' } },
+        { name: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } }
+      ],
+      _id: { $ne: req.user._id } // Exclude current user
+    })
+    .select('username name email profileImage followersCount followingCount')
+    .limit(20);
+
+    res.json({
+      success: true,
+      users
+    });
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Get following users
+router.get('/following', authMiddleware, async (req, res) => {
+  try {
+    // Assuming you have a Follow model
+    // If not, you can use your existing followers system
+    const follows = await followSchema.find({ follower: req.user._id })
+      .populate('following', 'username name profileImage')
+      .limit(50);
+
+    const users = follows.map(follow => follow.following);
+
+    res.json({
+      success: true,
+      users
+    });
+  } catch (error) {
+    console.error('Error fetching following:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
+
+
+
+
+
 
 // Get user profile
 router.get('/profile', authMiddleware, async (req, res) => {
