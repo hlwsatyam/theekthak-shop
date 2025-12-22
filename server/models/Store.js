@@ -35,6 +35,7 @@ const storeSchema = new mongoose.Schema({
     required: true
   },
   contactNumber: String,
+  assContactNumber: String,
   email: String,
   website: String,
   images: [String],
@@ -50,7 +51,7 @@ const storeSchema = new mongoose.Schema({
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: false
   },
   subscription: {
     isSubscribed: {
@@ -59,7 +60,7 @@ const storeSchema = new mongoose.Schema({
     },
     plan: {
       type: String,
-      enum: ['basic', 'premium', 'enterprise'],
+    
       default: 'basic'
     },
     startDate: Date,
@@ -81,6 +82,35 @@ const storeSchema = new mongoose.Schema({
       of: String
     }
   },
+
+
+
+
+
+
+
+reviews: [{
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  rating: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
+  },
+  comment: String,
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+}]
+,
+
+
+
+
 
 
 qrCode: {

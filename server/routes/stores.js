@@ -62,6 +62,7 @@ router.post('/',
         address, 
         category,
         contactNumber,
+        assContactNumber,
         email,
         website,
         latitude,
@@ -112,7 +113,7 @@ router.post('/',
           type: 'Point',
           coordinates: [parseFloat(longitude), parseFloat(latitude)]
         },
-        contactNumber,
+        contactNumber,assContactNumber,
         email,
         website,
         images,
@@ -159,9 +160,220 @@ await store.save();
 );
 
 // Get Nearby Stores
+// router.get('/nearby', async (req, res) => {
+//   try {
+//     const { latitude, longitude, maxDistance = 10000, category } = req.query;
+
+//     if (!latitude || !longitude) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Latitude and longitude are required'
+//       });
+//     }
+
+//     const query = {
+//       location: {
+//         $near: {
+//           $geometry: {
+//             type: "Point",
+//             coordinates: [parseFloat(longitude), parseFloat(latitude)]
+//           },
+//           $maxDistance: parseFloat(maxDistance)
+//         }
+//       },
+//       isActive: true
+//     };
+
+//     if (category) {
+//       query.category = category;
+//     }
+
+//     const stores = await Store.find(query)
+//       .populate('owner', 'name email username')
+//       .limit(20);
+
+//     res.json({
+//       success: true,
+//       count: stores.length,
+//       stores
+//     });
+//   } catch (error) {
+//     console.error('Nearby Stores Error:', error);
+//     res.status(500).json({ 
+//       success: false,
+//       message: 'Server error', 
+//       error: error.message 
+//     });
+//   }
+// });
+
+// // Search Stores
+// router.get('/search', async (req, res) => {
+//   try {
+//     const { q, category, minRating, hasDelivery, page = 1, limit = 10 } = req.query;
+
+//     const query = { isActive: true };
+
+//     if (q) {
+//       query.$text = { $search: q };
+//     }
+
+//     if (category) {
+//       query.category = category;
+//     }
+
+//     if (minRating) {
+//       query.rating = { $gte: parseFloat(minRating) };
+//     }
+
+//     if (hasDelivery === 'true') {
+//       query['features.hasDelivery'] = true;
+//     }
+
+//     const skip = (page - 1) * limit;
+
+//     const stores = await Store.find(query)
+//       .populate('owner', 'name email username')
+//       .skip(skip)
+//       .limit(parseInt(limit))
+//       .sort({ rating: -1, createdAt: -1 });
+
+//     const total = await Store.countDocuments(query);
+
+//     res.json({
+//       success: true,
+//       total,
+//       page: parseInt(page),
+//       pages: Math.ceil(total / limit),
+//       stores
+//     });
+//   } catch (error) {
+//     console.error('Search Stores Error:', error);
+//     res.status(500).json({ 
+//       success: false,
+//       message: 'Server error', 
+//       error: error.message 
+//     });
+//   }
+// });
+
+
+
+
+
+
+
+
+
+router.post('/submit/rating/store/:id/rate', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, rating, comment } = req.body;
+
+    // Validation
+    if (!userId || !rating) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID and rating are required'
+      });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rating must be between 1 and 5'
+      });
+    }
+
+    const store = await Store.findById(id);
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: 'Store not found'
+      });
+    }
+
+    // Check if user already reviewed this store
+    const existingReviewIndex = store.reviews.findIndex(
+      review => review.user.toString() === userId
+    );
+
+    const oldRating = existingReviewIndex !== -1 ? store.reviews[existingReviewIndex].rating : null;
+    const totalRatings = store.reviews.length;
+
+    if (existingReviewIndex !== -1) {
+      // Update existing review
+      store.reviews[existingReviewIndex].rating = rating;
+      store.reviews[existingReviewIndex].comment = comment || store.reviews[existingReviewIndex].comment;
+      store.reviews[existingReviewIndex].createdAt = new Date();
+    } else {
+      // Add new review
+      store.reviews.push({
+        user: userId,
+        rating,
+        comment: comment || '',
+        createdAt: new Date()
+      });
+    }
+
+    // Calculate new average rating
+    let newRatingTotal;
+    if (oldRating !== null) {
+      // If updating existing review
+      newRatingTotal = (store.rating * totalRatings) - oldRating + rating;
+      store.rating = newRatingTotal / totalRatings;
+    } else {
+      // If adding new review
+      newRatingTotal = (store.rating * totalRatings) + rating;
+      store.rating = newRatingTotal / (totalRatings + 1);
+      store.ratingCount = totalRatings + 1;
+    }
+
+    await store.save();
+
+    res.json({
+      success: true,
+      message: existingReviewIndex !== -1 ? 'Review updated successfully' : 'Review added successfully',
+      store: {
+        _id: store._id,
+        rating: store.rating,
+        ratingCount: store.ratingCount,
+        reviews: store.reviews
+      }
+    });
+
+  } catch (error) {
+    console.error('Rating Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+// Get Nearby Stores with Pagination using $geoNear
 router.get('/nearby', async (req, res) => {
   try {
-    const { latitude, longitude, maxDistance = 10000, category } = req.query;
+    const { 
+      latitude, 
+      longitude, 
+      maxDistance = 500000, // Default 50km
+      category,
+      page = 1, 
+      limit = 10 
+    } = req.query;
 
     if (!latitude || !longitude) {
       return res.status(400).json({
@@ -170,32 +382,45 @@ router.get('/nearby', async (req, res) => {
       });
     }
 
-    const query = {
-      location: {
-        $near: {
-          $geometry: {
-            type: "Point",
-            coordinates: [parseFloat(longitude), parseFloat(latitude)]
-          },
-          $maxDistance: parseFloat(maxDistance)
-        }
-      },
-      isActive: true
+    // 1. Build the $geoNear stage
+    const geoNearStage = {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [parseFloat(longitude), parseFloat(latitude)] // Note: longitude first
+        },
+        distanceField: 'distance', // Field name to store calculated distance in meters
+        maxDistance: parseFloat(maxDistance),
+        spherical: true, // Use spherical geometry for accurate Earth calculations
+        query: { isActive: true } // Base filter
+      }
     };
 
-    if (category) {
-      query.category = category;
+    // 2. Add category filter if needed
+    if (category && category !== 'all') {
+      geoNearStage.$geoNear.query.category = category;
     }
 
-    const stores = await Store.find(query)
-      .populate('owner', 'name email username')
-      .limit(20);
+    // 3. Build the aggregation pipeline
+    const pipeline = [geoNearStage];
+    
+    // 4. Add pagination stages
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: parseInt(limit) });
+
+    // 5. Execute the aggregation
+    const stores = await Store.aggregate(pipeline);
+
+    // To get total count for pagination info, you would need a separate count query
+    // using $geoWithin (Method 2 below)
 
     res.json({
       success: true,
-      count: stores.length,
-      stores
+      page: parseInt(page),
+      stores // Now each store has a 'distance' field in meters
     });
+
   } catch (error) {
     console.error('Nearby Stores Error:', error);
     res.status(500).json({ 
@@ -205,38 +430,125 @@ router.get('/nearby', async (req, res) => {
     });
   }
 });
-
-// Search Stores
-router.get('/search', async (req, res) => {
+// Get Popular Stores with Pagination
+router.get('/popular', async (req, res) => {
   try {
-    const { q, category, minRating, hasDelivery, page = 1, limit = 10 } = req.query;
+    const { 
+      category,
+      page = 1, 
+      limit = 10 
+    } = req.query;
 
-    const query = { isActive: true };
+    const query = { 
+      isActive: true,
+     
+    };
 
-    if (q) {
-      query.$text = { $search: q };
-    }
-
-    if (category) {
+    if (category && category !== 'all') {
       query.category = category;
     }
 
-    if (minRating) {
-      query.rating = { $gte: parseFloat(minRating) };
-    }
-
-    if (hasDelivery === 'true') {
-      query['features.hasDelivery'] = true;
-    }
-
-    const skip = (page - 1) * limit;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const stores = await Store.find(query)
       .populate('owner', 'name email username')
       .skip(skip)
       .limit(parseInt(limit))
-      .sort({ rating: -1, createdAt: -1 });
+      .sort({ 
+     
+        createdAt: -1 
+      });
 
+    const total = await Store.countDocuments(query);
+    console.error(stores);
+    res.json({
+      success: true,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / limit),
+      stores
+    });
+  } catch (error) {
+    console.error('Popular Stores Error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+});
+
+// Search Stores with Pagination
+router.get('/search', async (req, res) => {
+  try {
+    const { 
+      q, 
+      category, 
+      minRating, 
+      hasDelivery, 
+      sortBy = 'relevance',
+      page = 1, 
+      limit = 10 
+    } = req.query;
+
+    const query = { isActive: true };
+
+    // Text search
+    if (q && q.trim().length > 0) {
+      query.$text = { $search: q.trim() };
+    }
+
+    // Category filter
+    if (category && category !== 'all') {
+      query.category = category;
+    }
+
+    // Rating filter
+    if (minRating) {
+      query.rating = { $gte: parseFloat(minRating) };
+    }
+
+    // Delivery filter
+    if (hasDelivery === 'true') {
+      query['features.hasDelivery'] = true;
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Build sort object
+    let sort = {};
+    switch(sortBy) {
+      case 'rating':
+        sort = { rating: -1, ratingCount: -1 };
+        break;
+      case 'distance':
+        // This would require location coordinates
+        sort = { createdAt: -1 };
+        break;
+      case 'newest':
+        sort = { createdAt: -1 };
+        break;
+      default: // relevance
+        if (q && q.trim().length > 0) {
+          sort = { score: { $meta: "textScore" } };
+        } else {
+          sort = { rating: -1, createdAt: -1 };
+        }
+    }
+
+    let storesQuery = Store.find(query)
+      .populate('owner', 'name email username')
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Add text score for relevance sorting
+    if (q && q.trim().length > 0 && sortBy === 'relevance') {
+      storesQuery = storesQuery.select({ score: { $meta: "textScore" } });
+    }
+
+    storesQuery = storesQuery.sort(sort);
+
+    const stores = await storesQuery.exec();
     const total = await Store.countDocuments(query);
 
     res.json({
@@ -255,6 +567,67 @@ router.get('/search', async (req, res) => {
     });
   }
 });
+
+// Get Categories
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = await Store.distinct('category');
+    
+    // You can customize category icons here
+    const categoryIcons = {
+      'grocery': 'shopping-cart',
+      'electronics': 'devices',
+      'clothing': 'checkroom',
+      'restaurant': 'restaurant',
+      'pharmacy': 'local-pharmacy',
+      'beauty': 'spa',
+      'home': 'home',
+      // Add more as needed
+    };
+
+    const formattedCategories = categories
+      .filter(cat => cat) // Remove null/undefined
+      .map(cat => ({
+        id: cat.toLowerCase(),
+        name: cat.charAt(0).toUpperCase() + cat.slice(1),
+        icon: categoryIcons[cat.toLowerCase()] || 'store'
+      }));
+
+    res.json({
+      success: true,
+      categories: formattedCategories
+    });
+  } catch (error) {
+    console.error('Categories Error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Get Store by ID
 router.get('/:id', async (req, res) => {

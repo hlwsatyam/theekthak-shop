@@ -5,20 +5,21 @@ const crypto = require('crypto');
 const Subscription = require('../models/Subscription');
 const Store = require('../models/Store');
 const {authMiddleware} = require('../middleware/auth');
-
+ 
 // Initialize Razorpay
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_live_RolucMHxrdKOmN',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'uXa4g8k5mWe1bU0Es0PX4MOI'
+  key_id: process.env.RAZORPAY_KEY_ID  ,
+  key_secret: process.env.RAZORPAY_KEY_SECRET  
 });
 
-// Create Order for Subscription
+ 
 router.post('/create-order', authMiddleware, async (req, res) => {
   try {
     const { storeId, plan } = req.body;
 
     // Validate plan
     const plans = {
+      'basic_0': { amount: 100, days: 2 }, // 199 INR in paise
       'basic_30': { amount: 19900, days: 30 }, // 199 INR in paise
       'premium_90': { amount: 49900, days: 90 }, // 499 INR
       'enterprise_365': { amount: 149900, days: 365 } // 1499 INR
@@ -74,16 +75,16 @@ router.post('/create-order', authMiddleware, async (req, res) => {
       plan: plan,
       amount: amount / 100, // Convert paise to rupees
       currency: currency,
-      razorpayOrderId: "order.id",
+      razorpayOrderId: order.id,
       status: 'completed'
     });
 
     await subscription.save();
-
+ 
     res.json({
       success: true,
       order: {
-        id: "order.id",
+        id: order.id,
         amount: order.amount,
         currency: order.currency,
         key: process.env.RAZORPAY_KEY_ID
@@ -109,7 +110,7 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
       razorpay_signature,
       subscriptionId 
     } = req.body;
-
+ 
     // Verify signature
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
@@ -120,7 +121,7 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
     if (expectedSignature === razorpay_signature) {
       // Update subscription
       const subscription = await Subscription.findById(subscriptionId);
-      
+     
       if (!subscription) {
         return res.status(404).json({
           success: false,
@@ -135,6 +136,7 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
       
       // Calculate end date based on plan
       const plans = {
+        'basic_0': 2,
         'basic_30': 30,
         'premium_90': 90,
         'enterprise_365': 365
@@ -155,7 +157,7 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
         razorpaySubscriptionId: subscription._id,
         razorpayPaymentId: razorpay_payment_id
       };
-      
+      store.isActive=true;
       await store.save();
 
       res.json({

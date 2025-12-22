@@ -26,7 +26,7 @@ exports.getOrCreateConversation = async (req, res) => {
     let conversation = await Conversation.findOne({
       participants: { $all: [req.user._id, receiverId] }
     });
-
+console.log(req.user._id, receiverId)
     if (!conversation) {
       // Create new conversation
       conversation = new Conversation({
