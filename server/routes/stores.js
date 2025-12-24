@@ -460,7 +460,7 @@ router.get('/popular', async (req, res) => {
       });
 
     const total = await Store.countDocuments(query);
-    console.error(stores);
+    
     res.json({
       success: true,
       total,

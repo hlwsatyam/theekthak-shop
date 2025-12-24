@@ -21,7 +21,7 @@ router.get(
       const skip = (page - 1) * limit;
 
       const history = await ScanHistory.find({ store: storeId })
-        .populate('user', 'name') // ✅ ONLY USER NAME
+        .populate('user', 'name username profileImage') // ✅ ONLY USER NAME
         .sort({ scannedAt: -1 })
         .skip(skip)
         .limit(limit);

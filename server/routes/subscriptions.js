@@ -19,10 +19,10 @@ router.post('/create-order', authMiddleware, async (req, res) => {
 
     // Validate plan
     const plans = {
-      'basic_0': { amount: 100, days: 2 }, // 199 INR in paise
-      'basic_30': { amount: 19900, days: 30 }, // 199 INR in paise
-      'premium_90': { amount: 49900, days: 90 }, // 499 INR
-      'enterprise_365': { amount: 149900, days: 365 } // 1499 INR
+      // 'basic_0': { amount: 100, days: 2 }, // 199 INR in paise
+      // 'basic_30': { amount: 19900, days: 30 }, // 199 INR in paise
+      'premium_90': { amount: 39900, days: 90 }, // 499 INR
+      // 'enterprise_365': { amount: 149900, days: 365 } // 1499 INR
     };
 
     if (!plans[plan]) {
@@ -47,6 +47,7 @@ router.post('/create-order', authMiddleware, async (req, res) => {
     // Check if store already has active subscription
     if (store.subscription.isSubscribed && 
         new Date(store.subscription.endDate) > new Date()) {
+          console.error('Create Order Error:', "error");
       return res.status(400).json({
         success: false,
         message: 'Store already has active subscription'

@@ -20,8 +20,24 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
+const storagex = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = 'uploads/products/';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
 
 const fileFilter = (req, file, cb) => {
+   cb(null, true);
+};
+const fileFilterx = (req, file, cb) => {
    cb(null, true);
 };
 
@@ -29,7 +45,14 @@ const upload = multer({
   storage, 
   fileFilter,
   limits: {
-    fileSize: 100 * 1024 * 1024 // 100MB max
+    fileSize: 10000 * 1024 * 1024 // 100MB max
+  }
+});
+const uploadx = multer({ 
+ storage: storagex, 
+  fileFilterx,
+  limits: {
+    fileSize: 10000 * 1024 * 1024 // 100MB max
   }
 });
 
@@ -77,7 +100,35 @@ const getVideoDuration = (videoPath) => {
 
 
 
+router.post('/uploadForEdit', auth, uploadx.single('media'), async (req, res) => {
+  try {
+    
+  
+ 
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
 
+ console.log(req.file)
+
+    res.status(201).json({
+      success: true,
+  
+      data: req.file
+    });
+
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Upload failed',
+      error: error.message
+    });
+  }
+});
 
 
 

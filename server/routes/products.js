@@ -226,13 +226,13 @@ router.put('/:id',
           ...req.files.map(file => file.filename)
         ];
       }
-
+console.log(req.body)
       // Parse numeric fields
       if (updates.price) updates.price = parseFloat(updates.price);
       if (updates.stock) updates.stock = parseInt(updates.stock);
       if (updates.discount) updates.discount = parseFloat(updates.discount);
-      if (updates.attributes) updates.attributes = JSON.parse(updates.attributes);
-      if (updates.tags) updates.tags = updates.tags.split(',').map(tag => tag.trim());
+      if (updates.attributes) updates.attributes =  updates.attributes;
+      if (updates.tags) updates.tags = updates?.tags?.length>0? updates.tags :[];
 
       const updatedProduct = await Product.findByIdAndUpdate(
         req.params.id,
