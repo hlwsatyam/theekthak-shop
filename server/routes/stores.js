@@ -127,7 +127,7 @@ router.post('/',
       await store.save();
 
 
-const qrPayload = `www.theekthak.techmintlab.com/store/scan/${store._id}`;
+const qrPayload = `https://gorgeous-gumdrop-4c024d.netlify.app/store/scan/${store._id}`;
 
 const qrCodeBase64 = await QRCode.toDataURL(qrPayload);
 

@@ -21,7 +21,8 @@ router.post('/create-order', authMiddleware, async (req, res) => {
     const plans = {
       // 'basic_0': { amount: 100, days: 2 }, // 199 INR in paise
       // 'basic_30': { amount: 19900, days: 30 }, // 199 INR in paise
-      'premium_90': { amount: 39900, days: 90 }, // 499 INR
+      'basic_2': { amount: 2900, days: 2 }, // 499 INR
+      'basic_30': { amount: 39900, days: 90 }, // 499 INR
       // 'enterprise_365': { amount: 149900, days: 365 } // 1499 INR
     };
 
