@@ -11,20 +11,20 @@ const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID  ,
   key_secret: process.env.RAZORPAY_KEY_SECRET  
 });
+    // Validate plan
+    const plans = {
+      // 'basic_0': { amount: 100, days: 2 }, // 199 INR in paise
+      // 'basic_30': { amount: 19900, days: 30 }, // 199 INR in paise
+      'basic_2': { amount: 2900, days: 2 }, // 499 INR
+      'basic_30': { amount: 39900, days: 30 }, // 499 INR
+      // 'enterprise_365': { amount: 149900, days: 365 } // 1499 INR
+    };
 
  
 router.post('/create-order', authMiddleware, async (req, res) => {
   try {
     const { storeId, plan } = req.body;
 
-    // Validate plan
-    const plans = {
-      // 'basic_0': { amount: 100, days: 2 }, // 199 INR in paise
-      // 'basic_30': { amount: 19900, days: 30 }, // 199 INR in paise
-      'basic_2': { amount: 2900, days: 2 }, // 499 INR
-      'basic_30': { amount: 39900, days: 90 }, // 499 INR
-      // 'enterprise_365': { amount: 149900, days: 365 } // 1499 INR
-    };
 
     if (!plans[plan]) {
       return res.status(400).json({
@@ -138,11 +138,14 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
       
       // Calculate end date based on plan
       const plans = {
-        'basic_0': 2,
+        'basic_2': 2,
         'basic_30': 30,
-        'premium_90': 90,
-        'enterprise_365': 365
+       
       };
+
+ 
+
+
       
       const days = plans[subscription.plan];
       subscription.endDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
