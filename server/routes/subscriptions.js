@@ -15,8 +15,11 @@ const razorpay = new Razorpay({
     const plans = {
       // 'basic_0': { amount: 100, days: 2 }, // 199 INR in paise
       // 'basic_30': { amount: 19900, days: 30 }, // 199 INR in paise
-      'basic_2': { amount: 2900, days: 2 }, // 499 INR
-      'basic_30': { amount: 39900, days: 30 }, // 499 INR
+      'basic_0': { amount: 2900, days: 15 }, // 499 INR
+      'basic_1': { amount: 9900, days: 30 }, // 499 INR
+      'basic_2': { amount: 39900, days: 90 }, // 499 INR
+      'basic_3': { amount: 49900, days: 180 }, // 499 INR
+      'basic_4': { amount: 64900, days: 270 }, // 499 INR
       // 'enterprise_365': { amount: 149900, days: 365 } // 1499 INR
     };
 
@@ -138,8 +141,11 @@ router.post('/verify-payment', authMiddleware, async (req, res) => {
       
       // Calculate end date based on plan
       const plans = {
-        'basic_2': 2,
-        'basic_30': 30,
+        'basic_0': 15,
+        'basic_1': 30,
+        'basic_2': 90,
+        'basic_3': 180,
+        'basic_4': 270,
        
       };
 
