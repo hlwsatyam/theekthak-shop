@@ -724,11 +724,11 @@ router.put('/:id',
       }
 
       const updates = req.body;
-      
+      console.log(req.files)
       // Handle images
       if (req.files && req.files.length > 0) {
         updates.images = [
-          ...store.images,
+          // ...store.images,
           ...req.files.map(file => file.filename)
         ];
       }

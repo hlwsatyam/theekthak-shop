@@ -9,7 +9,56 @@ const followSchema = require('../models/followSchema');
 
 
 
+router.post('/fcm-token',   async (req, res) => {
+  try {
+    const { fcmToken } = req.body;
+    
+    if (!fcmToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'FCM token is required'
+      });
+    }
 
+    await User.findByIdAndUpdate(
+      req.body.id,
+      { fcmToken },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: 'FCM token saved successfully'
+    });
+  } catch (error) {
+    console.error('Save FCM token error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save FCM token'
+    });
+  }
+});
+
+router.delete('/fcm-token',   async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(
+      req.body.id,
+      { $unset: { fcmToken: 1 } },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: 'FCM token removed successfully'
+    });
+  } catch (error) {
+    console.error('Remove FCM token error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to remove FCM token'
+    });
+  }
+});
 
 
 router.get('/search', authMiddleware, async (req, res) => {

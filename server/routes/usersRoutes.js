@@ -6,72 +6,7 @@ const Post = require('../models/postSchema');
 const Reel = require('../models/reelSchema');
 const {authMiddleware:  auth} = require('../middleware/auth');
 
-// Get user profile with detailed stats
-router.get('/:userId', auth, async (req, res) => {
-  try {
-    const userId = req.params.userId;
-    
-    const user = await User.findById(userId)
-      .select('-password -otp -otpExpires')
-      .lean();
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    // Get detailed counts
-    const postCount = await Post.countDocuments({ user: userId });
-    const reelCount = await Reel.countDocuments({ user: userId });
-    
-    // Check follow status
-    const isFollowing = await Follow.findOne({
-      follower: req.user.id,
-      following: userId
-    });
-
-    // Check if follows back
-    const followsBack = await Follow.findOne({
-      follower: userId,
-      following: req.user.id
-    });
-
-    // Get mutual followers count
-    const currentUserFollowing = await Follow.find({ follower: req.user.id })
-      .select('following');
-    const targetUserFollowing = await Follow.find({ follower: userId })
-      .select('following');
-
-    const currentFollowingIds = currentUserFollowing.map(f => f.following.toString());
-    const targetFollowingIds = targetUserFollowing.map(f => f.following.toString());
-
-    const mutualIds = currentFollowingIds.filter(id => 
-      targetFollowingIds.includes(id) && id !== req.user.id && id !== userId
-    );
-
-    res.json({
-      success: true,
-      user: {
-        ...user,
-        postCount,
-        reelCount,
-        isFollowing: !!isFollowing,
-        followsBack: !!followsBack,
-        mutualFollowersCount: mutualIds.length
-      }
-    });
-
-  } catch (error) {
-    console.error('Get user error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get user profile',
-      error: error.message
-    });
-  }
-});
 
 // Update user profile
 router.put('/update-profile', auth, async (req, res) => {
@@ -298,5 +233,70 @@ router.get('/:userId/content', auth, async (req, res) => {
     });
   }
 });
+// Get user profile with detailed stats
+router.get('/:userId', auth, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    
+    const user = await User.findById(userId)
+      .select('-password -otp -otpExpires')
+      .lean();
+console.log(user)
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
 
+    // Get detailed counts
+    const postCount = await Post.countDocuments({ user: userId });
+    const reelCount = await Reel.countDocuments({ user: userId });
+    
+    // Check follow status
+    const isFollowing = await Follow.findOne({
+      follower: req.user.id,
+      following: userId
+    });
+
+    // Check if follows back
+    const followsBack = await Follow.findOne({
+      follower: userId,
+      following: req.user.id
+    });
+
+    // Get mutual followers count
+    const currentUserFollowing = await Follow.find({ follower: req.user.id })
+      .select('following');
+    const targetUserFollowing = await Follow.find({ follower: userId })
+      .select('following');
+
+    const currentFollowingIds = currentUserFollowing.map(f => f.following.toString());
+    const targetFollowingIds = targetUserFollowing.map(f => f.following.toString());
+
+    const mutualIds = currentFollowingIds.filter(id => 
+      targetFollowingIds.includes(id) && id !== req.user.id && id !== userId
+    );
+
+    res.json({
+      success: true,
+      user: {
+        ...user,
+        postCount,
+        reelCount,
+        isFollowing: !!isFollowing,
+        followsBack: !!followsBack,
+        mutualFollowersCount: mutualIds.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get user profile',
+      error: error.message
+    });
+  }
+});
 module.exports = router;

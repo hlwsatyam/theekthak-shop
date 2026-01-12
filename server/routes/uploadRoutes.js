@@ -60,6 +60,7 @@ const path = require('path');
 const fs = require('fs');
  const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
+const User = require('../models/User');
 const ffprobePath = require('ffprobe-static').path;
 
 ffmpeg.setFfmpegPath(ffmpegPath);
@@ -129,6 +130,55 @@ router.post('/uploadForEdit', auth, uploadx.single('media'), async (req, res) =>
     });
   }
 });
+
+
+
+
+
+router.post('/profile-image', auth, upload.single('profileImage'), async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image uploaded'
+      });
+    }
+
+    // Generate full URL
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const profileImageUrl = `${baseUrl}/uploads/${req.file.filename}`;
+
+    // Update user's profile image in database
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { 
+        profileImage: profileImageUrl,
+        profileCompleted: true 
+      },
+      { new: true, select: '-password -otp -otpExpires' }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile image updated successfully',
+      user: updatedUser,
+      profileImage: profileImageUrl
+    });
+
+  } catch (error) {
+    console.error('Profile image upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload profile image',
+      error: error.message
+    });
+  }
+});
+
+
+
 
 
 

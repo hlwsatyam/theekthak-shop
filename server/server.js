@@ -43,6 +43,24 @@ app.use('/api/posts', require('./routes/postRoutes.js'));
 app.use('/api/reels', require('./routes/reelRoutes.js'));
 app.use('/api/upload', require('./routes/uploadRoutes.js'));
 
+
+
+
+ 
+
+
+
+
+const notificationRoutes = require('./routes/notificationRoutes');
+app.use('/api/notifications', notificationRoutes);
+
+
+const reportRoutes = require('./routes/reportRoutes');
+app.use('/api/reports', reportRoutes);
+
+
+
+
 app.use('/api/stores', require('./routes/stores.js'));
 app.use('/api/products', require('./routes/products.js'));
 app.use('/api/subscriptions', require('./routes/subscriptions.js'));

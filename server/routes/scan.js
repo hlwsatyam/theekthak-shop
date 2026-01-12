@@ -8,6 +8,57 @@ const { authMiddleware } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 const ScanHistory = require('../models/ScanHistory');
 
+
+
+
+
+
+
+// backend/routes/scan.js में नया route add करें
+router.get('/user/history', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    // User के सभी scans लाएं
+    const scans = await ScanHistory.find({ user: userId })
+      .populate({
+        path: 'store',
+        select: 'name category address images' // Store details
+      })
+      .sort({ scannedAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Total count
+    const total = await ScanHistory.countDocuments({ user: userId });
+
+    res.json({
+      success: true,
+      scans,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    });
+  } catch (err) {
+    console.error('User history error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user scan history'
+    });
+  }
+});
+
+
+
+
+
+
+
+
+
  
 
 router.get(

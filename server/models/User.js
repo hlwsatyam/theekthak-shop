@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
   },
   profileImage: String,
 
-
+  fcmToken: String,
   followersCount: {
     type: Number,
     default: 0
